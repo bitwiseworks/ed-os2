@@ -9,7 +9,7 @@ LC_ALL=C
 export LC_ALL
 objdir=`pwd`
 testdir=`cd "$1" ; pwd`
-ED="${objdir}"/ed
+ED="${objdir}"/ed${EXEEXT}
 framework_failure() { echo "failure in testing framework" ; exit 1 ; }
 
 if [ ! -f "${ED}" ] || [ ! -x "${ED}" ] ; then

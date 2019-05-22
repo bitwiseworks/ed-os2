@@ -81,6 +81,9 @@ bool put_lines( const int addr );
 const char * put_sbuf_line( const char * const buf, const int size );
 line_t * search_line_node( const int addr );
 void set_binary( void );
+#ifdef __OS2__
+void set_textmode( void );
+#endif
 void set_current_addr( const int addr );
 void set_modified( const bool m );
 bool yank_lines( const int from, const int to );

@@ -20,6 +20,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef __OS2__
+#include <stdlib.h>
+#endif
 
 #include "ed.h"
 
@@ -38,6 +41,10 @@ static bool unterminated_last_line( void )
 
 int linenum( void ) { return linenum_; }
 
+#ifdef __OS2__
+static bool textmode = false;
+void set_textmode( void ) { textmode = true; }
+#endif
 
 /* print text to stdout */
 static void print_line( const char * p, int len, const int pflags )
@@ -273,7 +280,11 @@ int read_file( const char * const filename, const int addr )
   int ret;
 
   if( *filename == '!' ) fp = popen( filename + 1, "r" );
+#ifdef __OS2__
+  else fp = fopen( strip_escapes( filename ), textmode ? "r": "rb" );
+#else
   else fp = fopen( strip_escapes( filename ), "r" );
+#endif
   if( !fp )
     {
     show_strerror( filename, errno );
@@ -328,10 +339,28 @@ int write_file( const char * const filename, const char * const mode,
   {
   FILE * fp;
   long size;
+#ifdef __OS2__
+  char *binmode;
+#endif
   int ret;
 
+#ifdef __OS2__
+  if (textmode)
+     binmode = (char *) mode;
+  else {
+     binmode = malloc (strlen (mode) + 2);
+     if (!binmode)
+       binmode = (char *) mode;
+  }
+  strcpy (binmode, mode);
+  strcat (binmode, "b");
+#endif
   if( *filename == '!' ) fp = popen( filename + 1, "w" );
+#ifdef __OS2__
+  else fp = fopen( strip_escapes( filename ), binmode );
+#else
   else fp = fopen( strip_escapes( filename ), mode );
+#endif
   if( !fp )
     {
     show_strerror( filename, errno );

@@ -38,6 +38,12 @@
 #include <sys/stat.h>
 #include <locale.h>
 
+#ifdef __OS2__
+#include <unistd.h>
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #include "carg_parser.h"
 #include "ed.h"
 
@@ -50,6 +56,9 @@ static bool restricted_ = false;	/* if set, run in restricted mode */
 static bool scripted_ = false;		/* if set, suppress diagnostics,
 					   byte counts and '!' prompt */
 static bool traditional_ = false;	/* if set, be backwards compatible */
+#ifdef __OS2__
+static bool textmode_ = false;         /* if set, read input and write output in textmode (EOL = CRLF) */
+#endif
 
 
 bool restricted( void ) { return restricted_; }
@@ -75,6 +84,9 @@ static void show_help( void )
           "  -p, --prompt=STRING        use STRING as an interactive prompt\n"
           "  -r, --restricted           run in restricted mode\n"
           "  -s, --quiet, --silent      suppress diagnostics, byte counts and '!' prompt\n"
+#ifdef __OS2__
+          "  -T, --textmode             input and output in textmode (EOL = CRLF)\n"
+#endif
           "  -v, --verbose              be verbose; equivalent to the 'H' command\n"
           "Start edit by reading in 'file' if given.\n"
           "If 'file' begins with a '!', read output of shell command.\n"
@@ -156,6 +168,9 @@ int main( const int argc, const char * const argv[] )
     { 's', "silent",            ap_no  },
     { 'v', "verbose",           ap_no  },
     { 'V', "version",           ap_no  },
+#ifdef __OS2__
+    { 'T', "textmode",          ap_no  },
+#endif
     {  0 ,  0,                  ap_no } };
 
   struct Arg_parser parser;
@@ -181,10 +196,21 @@ int main( const int argc, const char * const argv[] )
       case 's': scripted_ = true; break;
       case 'v': set_verbose(); break;
       case 'V': show_version(); return 0;
+#ifdef __OS2__
+      case 'T': textmode_ = true; break;
+#endif
       default : show_error( "internal error: uncaught option.", 0, false );
                 return 3;
       }
     } /* end process options */
+
+#ifdef __OS2__
+  if (!textmode_) {
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+  } else
+    set_textmode();
+#endif
 
   setlocale( LC_ALL, "" );
   if( !init_buffers() ) return 1;
